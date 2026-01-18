@@ -6,6 +6,11 @@ import net.minecraft.client.Minecraft;
 public interface MinecraftClientExt {
 
     void setFramebuffer(RenderTarget fb);
+    void setNdiRenderSize(int width, int height);
+    void clearNdiRenderSize();
+    int getNdiRenderWidth();
+    int getNdiRenderHeight();
+    boolean hasNdiRenderSize();
 
     static MinecraftClientExt from(Minecraft self){
         return (MinecraftClientExt)self;

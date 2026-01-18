@@ -3,6 +3,7 @@ package dev.imabad.ndi;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.Window;
+
 import dev.imabad.ndi.threads.NDIControlThread;
 import dev.imabad.ndi.threads.NDIThread;
 import me.walkerknapp.devolay.DevolayMetadataFrame;
@@ -36,6 +37,24 @@ public class GameRenderHook {
         mainSender.addConnectionMetadata(metadataFrame);
     }
 
+    public void setMainOutputFps(int fps) {
+        if (mainOutput != null) {
+            mainOutput.setTargetFps(fps);
+        }
+    }
+
+    public void setMainOutputResolution(int width, int height) {
+        if (mainOutput != null) {
+            mainOutput.updateVideoFrame(width, height);
+        }
+        // Mark resolution changed so buffers get recreated
+        resolutionChanged = true;
+    }
+
+    private boolean resolutionChanged = false;
+    private int lastOutputWidth = 0;
+    private int lastOutputHeight = 0;
+
     public Vec3 getEyePos(Entity entity){
         return entity.position().add(0, entity.getEyeHeight(), 0);
     }
@@ -59,18 +78,27 @@ public class GameRenderHook {
     }
 
     public void render(RenderTarget framebuffer, Window window, Player player, boolean isPaused){
-        boolean hasResChanged = false;
+        int outputWidth = NDIMod.getOutputWidth();
+        int outputHeight = NDIMod.getOutputHeight();
+        
+        // Check if resolution setting changed
+        boolean hasResChanged = resolutionChanged || (lastOutputWidth != outputWidth) || (lastOutputHeight != outputHeight);
+        if (hasResChanged) {
+            lastOutputWidth = outputWidth;
+            lastOutputHeight = outputHeight;
+            resolutionChanged = false;
+        }
+        
         if(mainOutput == null){
             pboManager = new PBOManager(window.getScreenWidth(), window.getScreenHeight());
             pboManager.readPixelData(framebuffer);
-            mainOutput = new NDIThread(mainSender, pboManager.buffer, window.getScreenWidth(), window.getScreenHeight());
+            mainOutput = new NDIThread(mainSender, pboManager.buffer, window.getScreenWidth(), window.getScreenHeight(), NDIMod.getOutputFps());
             mainOutput.start();
         } else if (mainOutput.getNeedsFrame().get()) {
             if (mainOutput.width.get() != window.getScreenWidth() || mainOutput.height.get() != window.getScreenHeight()) {
                 pboManager.cleanUp();
                 pboManager = new PBOManager(window.getScreenWidth(), window.getScreenHeight());
                 mainOutput.updateVideoFrame(window.getScreenWidth(), window.getScreenHeight());
-                hasResChanged = true;
             }
             if(mainOutput.sender.get().getConnectionCount(0) > 0){
                 pboManager.readPixelData(framebuffer);
@@ -86,13 +114,13 @@ public class GameRenderHook {
             for(CameraEntity e : NDIMod.getCameraManager().cameraEntities){
                 PBOManager pboManager;
                 if(!entityBuffers.containsKey(e.getUUID())){
-                    pboManager = new PBOManager(window.getScreenWidth(), window.getScreenHeight());
+                    pboManager = new PBOManager(outputWidth, outputHeight);
                     entityBuffers.put(e.getUUID(), pboManager);
                 } else {
                     pboManager = entityBuffers.get(e.getUUID());
                     if(hasResChanged){
                         pboManager.cleanUp();
-                        pboManager = new PBOManager(window.getScreenWidth(), window.getScreenHeight());
+                        pboManager = new PBOManager(outputWidth, outputHeight);
                         entityBuffers.put(e.getUUID(), pboManager);
                     }
                 }
@@ -102,7 +130,7 @@ public class GameRenderHook {
                     DevolayMetadataFrame metadataFrame = new DevolayMetadataFrame();
                     metadataFrame.setData("<ndi_capabilities ntk_ptz=\"true\"/>");
                     sender.addConnectionMetadata(metadataFrame);
-                    ndiThread = new NDIThread(sender, pboManager.buffer, window.getScreenWidth(), window.getScreenHeight());
+                    ndiThread = new NDIThread(sender, pboManager.buffer, outputWidth, outputHeight, NDIMod.getOutputFps());
                     NDIMod.getCameraManager().cameras.put(e.getUUID(), ndiThread);
                     NDIControlThread ndiControlThread = new NDIControlThread(sender, e);
                     NDIMod.getCameraManager().cameraControls.put(e.getUUID(), ndiControlThread);
@@ -111,7 +139,7 @@ public class GameRenderHook {
                 } else {
                     ndiThread = NDIMod.getCameraManager().cameras.get(e.getUUID());
                     if(hasResChanged){
-                        ndiThread.updateVideoFrame(window.getScreenWidth(), window.getScreenHeight());
+                        ndiThread.updateVideoFrame(outputWidth, outputHeight);
                     }
                 }
                 if(e.isAlive() && ndiThread.getNeedsFrame().get() && ndiThread.sender.get().getConnectionCount(0) > 0) {
@@ -137,24 +165,30 @@ public class GameRenderHook {
                     }
                     RenderTarget entityFramebuffer;
                     if(!entityFramebuffers.containsKey(e.getUUID())){
-                        entityFramebuffer = new TextureTarget("ndi_entity", window.getScreenWidth(), window.getScreenHeight(), true);
+                        entityFramebuffer = new TextureTarget("ndi_entity", outputWidth, outputHeight, true);
                         entityFramebuffers.put(e.getUUID(), entityFramebuffer);
                     } else {
                         entityFramebuffer = entityFramebuffers.get(e.getUUID());
                         if(hasResChanged){
-                            entityFramebuffer.resize(window.getScreenWidth(), window.getScreenHeight());
+                            entityFramebuffer.resize(outputWidth, outputHeight);
                         }
                     }
-                    MinecraftClientExt.from(minecraftClient).setFramebuffer(entityFramebuffer);
+                    MinecraftClientExt clientExt = MinecraftClientExt.from(minecraftClient);
+                    clientExt.setFramebuffer(entityFramebuffer);
+                    clientExt.setNdiRenderSize(outputWidth, outputHeight);
 
                     PBOManager entityBytes = entityBuffers.get(e.getUUID());;
                     minecraftClient.cameraEntity = e;
                     CameraExt.from(minecraftClient.gameRenderer.getMainCamera()).setCameraY(e.getEyeHeight());
+                    
                     DeltaTracker deltaTracker = minecraftClient.getDeltaTracker();
                     minecraftClient.gameRenderer.renderLevel(deltaTracker);
+                    
                     entityBytes.readPixelData(entityFramebuffer);
                     NDIMod.getCameraManager().cameras.get(e.getUUID()).setByteBuffer(entityBytes.buffer);
                     CameraExt.from(minecraftClient.gameRenderer.getMainCamera()).setCameraY(prevCameraY);
+                    
+                    clientExt.clearNdiRenderSize();
                 }
                 MinecraftClientExt.from(minecraftClient).setFramebuffer(oldWindow);
 

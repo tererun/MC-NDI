@@ -27,6 +27,10 @@ public abstract class MinecraftClientMixin implements MinecraftClientExt {
 
     @Shadow private boolean pause;
 
+    private int ndiRenderWidth = 0;
+    private int ndiRenderHeight = 0;
+    private boolean ndiRenderSizeActive = false;
+
     @Inject(method = "runTick(Z)V", at=@At("RETURN"))
     public void runTick(boolean tick, CallbackInfo info) {
         if(NDIMod.getGameRenderHook() != null) {
@@ -37,6 +41,33 @@ public abstract class MinecraftClientMixin implements MinecraftClientExt {
     @Override
     public void setFramebuffer(RenderTarget fb) {
         mainRenderTarget = fb;
+    }
+
+    @Override
+    public void setNdiRenderSize(int width, int height) {
+        this.ndiRenderWidth = width;
+        this.ndiRenderHeight = height;
+        this.ndiRenderSizeActive = true;
+    }
+
+    @Override
+    public void clearNdiRenderSize() {
+        this.ndiRenderSizeActive = false;
+    }
+
+    @Override
+    public int getNdiRenderWidth() {
+        return ndiRenderWidth;
+    }
+
+    @Override
+    public int getNdiRenderHeight() {
+        return ndiRenderHeight;
+    }
+
+    @Override
+    public boolean hasNdiRenderSize() {
+        return ndiRenderSizeActive;
     }
 
     // TODO: These methods need to be updated for 1.21.8 - camera save/load disabled for now

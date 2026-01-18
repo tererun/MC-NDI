@@ -9,7 +9,8 @@
     "SoundManagerMixin",
     "GameRendererMixin",
     "MinecraftClientMixin",
-    "WorldRendererMixin"
+    "WorldRendererMixin",
+    "WindowMixin"
   ],
   "injectors": {
     "defaultRequire": 1

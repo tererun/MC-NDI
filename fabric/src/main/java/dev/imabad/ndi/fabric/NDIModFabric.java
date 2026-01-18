@@ -13,6 +13,7 @@ public class NDIModFabric implements ClientModInitializer {
         NDIMod.init();
         KeyBindingHelper.registerKeyBinding(NDIMod.getNewCameraKey());
         KeyBindingHelper.registerKeyBinding(NDIMod.getRemoveCameraMap());
+        KeyBindingHelper.registerKeyBinding(NDIMod.getOpenSettingsKey());
         ClientTickEvents.END_CLIENT_TICK.register(NDIMod::handleKeybind);
     }
 }

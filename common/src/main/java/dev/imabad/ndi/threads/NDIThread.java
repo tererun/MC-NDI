@@ -16,22 +16,34 @@ public class NDIThread extends Thread {
     private AtomicReference<DevolayVideoFrame> videoFrame;
     private AtomicBoolean needsFrame, hasFlipped;
     public AtomicInteger width, height;
+    public AtomicInteger targetFps;
     public boolean running = true;
 
     public NDIThread(DevolaySender sender, ByteBuffer image, int width, int height){
+        this(sender, image, width, height, 30);
+    }
+
+    public NDIThread(DevolaySender sender, ByteBuffer image, int width, int height, int fps){
         this.sender = new AtomicReference<>(sender);
         byteBuffer = new AtomicReference<>(image);
         videoFrame = new AtomicReference<>();
         this.width = new AtomicInteger(width);
         this.height = new AtomicInteger(height);
+        this.targetFps = new AtomicInteger(fps);
         needsFrame = new AtomicBoolean(true);
         hasFlipped = new AtomicBoolean(false);
         DevolayVideoFrame videoFrame1 = new DevolayVideoFrame();
         videoFrame1.setResolution(width, height);
         videoFrame1.setFourCCType(DevolayFrameFourCCType.RGBX);
         videoFrame1.setLineStride(width * 4);
-        videoFrame1.setFrameRate(30, 1);
+        videoFrame1.setFrameRate(fps, 1);
         videoFrame.set(videoFrame1);
+    }
+
+    public void setTargetFps(int fps) {
+        this.targetFps.set(fps);
+        DevolayVideoFrame frame = videoFrame.get();
+        frame.setFrameRate(fps, 1);
     }
 
     public void updateSender(DevolaySender sender){
@@ -69,8 +81,8 @@ public class NDIThread extends Thread {
         int frameCounter = 0;
         long fpsPeriod = System.currentTimeMillis();
         long lastFrame = System.currentTimeMillis();
-        float amountofTime = (1f / 30f) * 1000;
         while(running) {
+            float amountofTime = (1f / targetFps.get()) * 1000;
             long timeSinceLastFrame = System.currentTimeMillis() - lastFrame;
             if(timeSinceLastFrame < amountofTime){
                 try {
