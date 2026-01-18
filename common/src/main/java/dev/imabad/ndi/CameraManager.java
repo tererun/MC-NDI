@@ -9,13 +9,13 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.LevelStorageSource;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -57,7 +57,7 @@ public class CameraManager {
             saveFile = new File(server.getWorldPath(LevelResource.ROOT).toFile(), "cameras.dat");
         }
         try {
-            NbtIo.writeCompressed(allEntities, new FileOutputStream(saveFile));
+            NbtIo.writeCompressed(allEntities, saveFile.toPath());
         } catch (Exception exception) {
             System.out.println("Error occurred whilst saving cameras " + exception);
         }
@@ -80,18 +80,20 @@ public class CameraManager {
 
         try {
             if (saveFile.exists() && saveFile.isFile()) {
-                compoundTag = NbtIo.readCompressed(new FileInputStream(saveFile));
+                compoundTag = NbtIo.readCompressed(saveFile.toPath(), NbtAccounter.unlimitedHeap());
             }
         } catch (Exception exception) {
             System.out.println("Error occurred whilst loading cameras " + exception);
         }
         if(compoundTag != null) {
             CompoundTag finalCompoundTag = compoundTag;
-            compoundTag.getAllKeys().forEach(s -> {
+            compoundTag.keySet().forEach(s -> {
                 CompoundTag compoundTag1 = (CompoundTag) finalCompoundTag.get(s);
-                CameraEntity cameraEntity = new CameraEntity(world, new GameProfile(UUID.fromString(compoundTag1.getString("uuid")), compoundTag1.getString("name")));
+                String uuid = compoundTag1.getString("uuid").orElse("");
+                String name = compoundTag1.getString("name").orElse("");
+                CameraEntity cameraEntity = new CameraEntity(world, new GameProfile(UUID.fromString(uuid), name));
                 cameraEntity.cameraFromTag(compoundTag1);
-                world.putNonPlayerEntity(cameraEntity.getId(), cameraEntity);
+                world.addEntity(cameraEntity);
                 cameraEntities.add(cameraEntity);
             });
         }

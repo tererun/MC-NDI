@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.0-SNAPSHOT'
+    id 'fabric-loom' version '1.10-SNAPSHOT'
     id 'maven-publish'
     id 'idea'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
@@ -15,6 +15,10 @@ configurations {
     implementation.extendsFrom shade
 }
 
+repositories {
+    mavenLocal()
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.officialMojangMappings()
@@ -22,11 +26,12 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
     implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.1'
     implementation project(":Common")
-    shade 'me.walkerknapp:devolay:2.1.0'
+    shade 'me.walkerknapp:devolay:2.1.1'
 }
 
 shadowJar {
     configurations = [project.configurations.shade]
+    archiveClassifier = 'dev'
 }
 
 artifacts {
@@ -81,7 +86,7 @@ jar {
 remapJar {
     input.set shadowJar.archiveFile
     dependsOn shadowJar
-    classifier null
+    archiveClassifier = ''
 }
 
 publishing {

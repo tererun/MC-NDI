@@ -72,7 +72,8 @@ public class NDIControlThread extends Thread {
                         float pitch = entity.getXRot() - tilt;
                         float yaw = entity.getYRot() - pan;
                         entity.setYHeadRot(yaw);
-                        entity.absMoveTo(entity.getX(), entity.getY(), entity.getZ(), yaw, pitch);
+                        entity.setYRot(yaw);
+                        entity.setXRot(pitch);
                     } else if(type.equals("ntk_ptz_zoom_speed")){
                         Element element = (Element) doc.getFirstChild();
                         float zoomSpeed = Float.parseFloat(element.getAttribute("zoom_speed"));

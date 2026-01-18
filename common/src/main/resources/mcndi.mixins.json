@@ -2,14 +2,13 @@
   "required": true,
   "package": "dev.imabad.ndi.mixin",
   "refmap": "${mixin_refmap}",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_21",
   "mixins": [
     "CameraMixin",
     "ClientPlayerEntityMixin",
     "SoundManagerMixin",
     "GameRendererMixin",
     "MinecraftClientMixin",
-    "PlayerEntityRendererMixin",
     "WorldRendererMixin"
   ],
   "injectors": {

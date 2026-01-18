@@ -16,22 +16,35 @@ public class NDIMod {
 
     private static CameraManager cameraManager;
     private static GameRenderHook gameRenderHook;
+    private static boolean ndiAvailable = false;
 
     public static CameraManager getCameraManager() {
         return cameraManager;
     }
     public static GameRenderHook getGameRenderHook() { return gameRenderHook; }
+    public static boolean isNdiAvailable() { return ndiAvailable; }
     private static KeyMapping newCameraKey, removeCameraMap;
 
     public static void init(){
         System.out.println("Starting Fabric NDI, loading NDI libraries.");
-        Devolay.loadLibraries();
+        try {
+            Devolay.loadLibraries();
+            ndiAvailable = true;
+            System.out.println("NDI libraries loaded successfully.");
+        } catch (Throwable e) {
+            System.err.println("Failed to load NDI libraries: " + e.getMessage());
+            System.err.println("NDI functionality will be disabled. This is likely because Devolay is not compiled for your OS/architecture.");
+            ndiAvailable = false;
+        }
+        
         cameraManager = new CameraManager();
         String sourceName = "Player";
         if(Minecraft.getInstance().getUser() != null){
             sourceName = Minecraft.getInstance().getUser().getName();
         }
-        gameRenderHook = new GameRenderHook("MC - " + sourceName);
+        if (ndiAvailable) {
+            gameRenderHook = new GameRenderHook("MC - " + sourceName);
+        }
         newCameraKey = new KeyMapping("keys.mcndi.new", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, "NDI");
         removeCameraMap = new KeyMapping("keys.mcndi.remove", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F, "NDI");
     }
@@ -42,9 +55,10 @@ public class NDIMod {
             CameraEntity armorStandEntity = new CameraEntity(instance.level, new GameProfile(uuid, uuid.toString()));
             armorStandEntity.setPos(instance.player.getX(), instance.player.getY(), instance.player.getZ());
             armorStandEntity.setPosRaw(instance.player.getX(), instance.player.getY(), instance.player.getZ());
-            armorStandEntity.absMoveTo(instance.player.getX(), instance.player.getY(), instance.player.getZ(), instance.player.getYRot(), instance.player.getXRot());
+            armorStandEntity.setYRot(instance.player.getYRot());
+            armorStandEntity.setXRot(instance.player.getXRot());
             armorStandEntity.setYHeadRot(instance.player.yHeadRot);
-            instance.level.putNonPlayerEntity(armorStandEntity.getId(), armorStandEntity);
+            instance.level.addEntity(armorStandEntity);
             newCameraKey.setDown(false);
             cameraManager.cameraEntities.add(armorStandEntity);
         } else if(removeCameraMap.isDown() && instance.level != null && instance.player != null){

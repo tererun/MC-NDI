@@ -2,22 +2,17 @@ package dev.imabad.ndi;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import dev.imabad.ndi.threads.NDIControlThread;
 import dev.imabad.ndi.threads.NDIThread;
 import me.walkerknapp.devolay.DevolayMetadataFrame;
 import me.walkerknapp.devolay.DevolaySender;
-import net.minecraft.Util;
 import net.minecraft.client.CameraType;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +58,7 @@ public class GameRenderHook {
         entity.zo = lastTickPos.z;
     }
 
-    public void render(RenderTarget framebuffer, Window window, Player player, float tickDelta, boolean isPaused){
+    public void render(RenderTarget framebuffer, Window window, Player player, boolean isPaused){
         boolean hasResChanged = false;
         if(mainOutput == null){
             pboManager = new PBOManager(window.getScreenWidth(), window.getScreenHeight());
@@ -142,41 +137,26 @@ public class GameRenderHook {
                     }
                     RenderTarget entityFramebuffer;
                     if(!entityFramebuffers.containsKey(e.getUUID())){
-                        entityFramebuffer = new TextureTarget(window.getScreenWidth(), window.getScreenHeight(), true, Minecraft.ON_OSX);;
+                        entityFramebuffer = new TextureTarget("ndi_entity", window.getScreenWidth(), window.getScreenHeight(), true);
                         entityFramebuffers.put(e.getUUID(), entityFramebuffer);
                     } else {
                         entityFramebuffer = entityFramebuffers.get(e.getUUID());
                         if(hasResChanged){
-                            entityFramebuffer.resize(window.getScreenWidth(), window.getScreenHeight(), Minecraft.ON_OSX);
+                            entityFramebuffer.resize(window.getScreenWidth(), window.getScreenHeight());
                         }
                     }
-                    entityFramebuffer.bindWrite(true);
-                    GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
                     MinecraftClientExt.from(minecraftClient).setFramebuffer(entityFramebuffer);
-
-                    PoseStack poseStack = RenderSystem.getModelViewStack();
-                    Matrix4f projectionMatrix = RenderSystem.getProjectionMatrix();
-                    RenderSystem.backupProjectionMatrix();
-                    projectionMatrix.identity();
-                    poseStack.pushPose();
-                    poseStack.setIdentity();
 
                     PBOManager entityBytes = entityBuffers.get(e.getUUID());;
                     minecraftClient.cameraEntity = e;
                     CameraExt.from(minecraftClient.gameRenderer.getMainCamera()).setCameraY(e.getEyeHeight());
-//                    minecraftClient.gameRenderer.getCamera().updateEyeHeight();
-                    minecraftClient.gameRenderer.renderLevel(tickDelta, Util.getNanos(), new PoseStack());
-//                    minecraftClient.gameRenderer.getCamera().updateEyeHeight();
+                    DeltaTracker deltaTracker = minecraftClient.getDeltaTracker();
+                    minecraftClient.gameRenderer.renderLevel(deltaTracker);
                     entityBytes.readPixelData(entityFramebuffer);
                     NDIMod.getCameraManager().cameras.get(e.getUUID()).setByteBuffer(entityBytes.buffer);
                     CameraExt.from(minecraftClient.gameRenderer.getMainCamera()).setCameraY(prevCameraY);
-
-                    RenderSystem.restoreProjectionMatrix();
-                    poseStack.popPose();
-
                 }
                 MinecraftClientExt.from(minecraftClient).setFramebuffer(oldWindow);
-                oldWindow.bindWrite(true);
 
                 minecraftClient.cameraEntity = oldCam;
 //                minecraftClient.gameRenderer.getCamera().updateEyeHeight();

@@ -8,6 +8,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
+import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -128,8 +130,15 @@ public class CameraEntity extends RemotePlayer {
 
     public CompoundTag getTag(){
         CompoundTag tag = new CompoundTag();
-        tag.put("pos", this.newDoubleList(this.getX(), this.getY(), this.getZ()));
-        tag.put("rotation", this.newFloatList(this.getYRot(), this.getXRot()));
+        ListTag posList = new ListTag();
+        posList.add(DoubleTag.valueOf(this.getX()));
+        posList.add(DoubleTag.valueOf(this.getY()));
+        posList.add(DoubleTag.valueOf(this.getZ()));
+        tag.put("pos", posList);
+        ListTag rotationList = new ListTag();
+        rotationList.add(FloatTag.valueOf(this.getYRot()));
+        rotationList.add(FloatTag.valueOf(this.getXRot()));
+        tag.put("rotation", rotationList);
         tag.putString("name", this.name.getString());
         tag.putString("uuid", this.getStringUUID());
         tag.putFloat("zoom", this.zoom);
@@ -137,17 +146,17 @@ public class CameraEntity extends RemotePlayer {
     }
 
     public void cameraFromTag(CompoundTag tag){
-        ListTag pos = tag.getList("pos", 6);
-        ListTag rotation = tag.getList("rotation", 5);
-        this.setPos(pos.getDouble(0), pos.getDouble(1), pos.getDouble(2));
-        setYRot(rotation.getFloat(0));
-        setXRot(rotation.getFloat(1));
+        ListTag pos = tag.getListOrEmpty("pos");
+        ListTag rotation = tag.getListOrEmpty("rotation");
+        this.setPos(pos.getDoubleOr(0, 0), pos.getDoubleOr(1, 0), pos.getDoubleOr(2, 0));
+        setYRot(rotation.getFloatOr(0, 0));
+        setXRot(rotation.getFloatOr(1, 0));
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
         this.setYHeadRot(this.yHeadRot);
         this.setYBodyRot(this.yBodyRot);
-        this.name = Component.literal(tag.getString("name"));
-        this.zoom = tag.getFloat("zoom");
+        this.name = Component.literal(tag.getString("name").orElse(""));
+        this.zoom = tag.getFloat("zoom").orElse(0f);
         this.reapplyPosition();
     }
 }
