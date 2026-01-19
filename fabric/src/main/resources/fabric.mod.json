@@ -10,7 +10,7 @@
     "sources": "https://github.com/tererun/MC-NDI-2"
   },
   "license": "GNU GPLv3",
-  "icon": "",
+  "icon": "icon.png",
   "environment": "*",
   "entrypoints": {
     "client": ["dev.imabad.ndi.fabric.NDIModFabric"]
