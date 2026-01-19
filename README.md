@@ -1,6 +1,6 @@
-# MC NDI 
+# MC NDI 2
 
-[![](http://cf.way2muchnoise.eu/title/457015.svg)](https://www.curseforge.com/minecraft/mc-mods/mc-ndi)
+[![Modrinth](https://img.shields.io/modrinth/dt/mc-ndi-2?logo=modrinth&label=Modrinth)](https://modrinth.com/project/mc-ndi-2)
 
 Adding support for directly outputting Minecraft as NDI sources. 
 Currently, outputs the main screen by default using MC - Username, you can also add more cameras that have their own output sources. 
@@ -80,7 +80,7 @@ The official Devolay library does not include arm64 macOS natives. You need to b
 ### Building MC-NDI
 
 ```bash
-cd MC-NDI
+cd MC-NDI-2
 
 # Set JAVA_HOME if needed
 export JAVA_HOME=/path/to/java21
@@ -102,7 +102,7 @@ Under the hood this uses the [Devolay library by WalkerKnapp](https://github.com
 
 ## License
 
-This is licensed under the [GNU GPLv3 license](https://github.com/Rushmead/Fabric-NDI/blob/master/LICENSE)
+This is licensed under the [GNU GPLv3 license](https://github.com/tererun/MC-NDI-2/blob/main/LICENSE)
 
 ## Contributing
 

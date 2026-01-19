@@ -4,9 +4,7 @@
   "version": "${version}",
   "name": "MC NDI 2",
   "description": "Mod that adds NDI to Minecraft",
-  "authors": [
-    "Rushmead"
-  ],
+  "authors": ["Rushmead", "tererun"],
   "contact": {
     "homepage": "https://imabad.dev",
     "sources": "https://github.com/tererun/MC-NDI-2"
@@ -15,13 +13,9 @@
   "icon": "",
   "environment": "*",
   "entrypoints": {
-    "client": [
-      "dev.imabad.ndi.fabric.NDIModFabric"
-    ]
+    "client": ["dev.imabad.ndi.fabric.NDIModFabric"]
   },
-  "mixins": [
-    "mcndi2.mixins.json"
-  ],
+  "mixins": ["mcndi2.mixins.json"],
   "depends": {
     "fabricloader": ">=0.14",
     "fabric": "*",
