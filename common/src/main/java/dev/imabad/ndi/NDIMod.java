@@ -95,7 +95,7 @@ public class NDIMod {
             gameRenderHook = new GameRenderHook("MC - " + sourceName);
         }
         newCameraKey = new KeyMapping("keys.mcndi2.new", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, "NDI");
-        removeCameraMap = new KeyMapping("keys.mcndi2.remove", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_F, "NDI");
+        removeCameraMap = new KeyMapping("keys.mcndi2.remove", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), "NDI");
         openSettingsKey = new KeyMapping("keys.mcndi2.settings", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, "NDI");
     }
 
